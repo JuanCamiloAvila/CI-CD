@@ -1,27 +1,53 @@
+.PHONY: help install format train eval update-branch hf-login push-hub deploy all
+
+USER_NAME ?= "JuanCamiloAvila"
+USER_EMAIL ?= "javilab40853@gmail.com"
+
+help:
+	@echo Comandos disponibles:
+	@echo   make install       - Instalar dependencias
+	@echo   make format        - Formatear codigo con Black
+	@echo   make train         - Entrenar modelo
+	@echo   make eval          - Evaluar modelo y crear reporte
+	@echo   make update-branch - Actualizar rama con nuevos resultados
+	@echo   make hf-login      - Login en HuggingFace
+	@echo   make push-hub      - Subir archivos a HuggingFace Hub
+	@echo   make deploy        - Deploy completo (login + push)
+	@echo   make all           - Ejecutar todo
+
 install:
-pip install --upgrade pip &&\ pip install -r requirements.txt
+	python -m pip install -r requirements.txt
+
 format:
-black *.py
+	python -m black *.py
+
 train:
-python train.py
+	python train.py
+
 eval:
-echo "## Model Metrics" > report.md
-cat ./Results/metrics.txt >> report.md
-echo '\n## Confusion Matrix Plot' >> report.md
-echo '! [Confusion Matrix](./Results/models_results.png') >> report.md
-cml comment create report.md
+	@echo ## Model Metrics > report.md
+	@type .\Results\metrics.txt >> report.md
+	@echo. >> report.md
+	@echo ## Confusion Matrix Plot >> report.md
+	@echo ![Confusion Matrix](./Results/models_results.png) >> report.md
+	@echo Reporte creado en report.md
+
 update-branch:
-git config --global user.name $(USER_NAME)
-git config --global user.email $(USER_EMAIL)
-git commit -am "Update with new results"
-git push --force origin HEAD:update
+	git config --global user.name "$(USER_NAME)"
+	git config --global user.email "$(USER_EMAIL)"
+	git commit -am "Update with new results"
+	git push --force origin HEAD:update
+
 hf-login:
-pip install -U "huggingface_hub[cli]"
-git pull origin main
-git switch main huggingface-cli login --token $(TOKEN) --add-to-git-credential
+	pip install -U "huggingface_hub[cli]"
+	git pull origin main
+	huggingface-cli login --token $(TOKEN) --add-to-git-credential
+
 push-hub:
-huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"
-huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model -- repo-type=space --commit-message= "Sync Model"
-huggingface-cli uplload Gatling-D-Ace/Drug-Classification ./Results /Metrics --repo-type=space --commit-message="Sync Model"
+	huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"
+	huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model --repo-type=space --commit-message="Sync Model"
+	huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Results --repo-type=space --commit-message="Sync Metrics"
+
 deploy: hf-login push-hub
-all: install format train eval update.branch deploy
+
+all: install format train eval update-branch deploy
