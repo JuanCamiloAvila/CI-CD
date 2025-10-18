@@ -36,7 +36,7 @@ update-branch:
 hf-login:
 	pip install -U "huggingface_hub[cli]"
 	git pull origin main
-	huggingface-cli login
+	python -m huggingface_hub.cli login
 
 push-hub:
 	huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"
