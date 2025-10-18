@@ -1,81 +1,17 @@
-name: CD - Deploy Model to HuggingFace
-
+name: Continuous Deployment
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    types:
+      - completed
+
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Train final model
-        run: python train.py
-
-      - name: Evaluate final model
-        run: python evaluate.py
-
-      - name: Configure Git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Login to HuggingFace Hub
+      - uses: actions/checkout@v3- name: Deployment To Hugging Face
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          pip install -U "huggingface_hub[cli]"
-          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
-
-      - name: Upload App to HuggingFace
-        run: |
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App \
-            --repo-type=space \
-            --commit-message="Sync App files"
-
-      - name: Upload Model to HuggingFace
-        run: |
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model \
-            --repo-type=space \
-            --commit-message="Sync Model"
-
-      - name: Upload Results to HuggingFace
-        run: |
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Results \
-            --repo-type=space \
-            --commit-message="Sync Metrics"
-
-      - name: Create GitHub Release with Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: production-model
-          path: |
-            Model/
-            Results/metrics.txt
-            Results/models_results.png
-
-      - name: Notify Success
-        if: success()
-        run: |
-          echo "✅ Deployment successful!"
-          echo "Model uploaded to HuggingFace Hub"
-
-      - name: Notify Failure
-        if: failure()
-        run: |
-          echo "❌ Deployment failed!"
-          echo "Check the logs for more details"
+          HF: ${{ secrets.TOKEN }}
+        run: make deploy TOKEN=$TOKEN
