@@ -2,7 +2,7 @@
 
 USER_NAME ?= "JuanCamiloAvila"
 USER_EMAIL ?= "javilab40853@gmail.com"
-TOKEN ?= "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"
+#TOKEN ?= "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"
 help:
 	@echo Comandos disponibles:
 	@echo   make install       - Instalar dependencias
