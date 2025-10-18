@@ -2,7 +2,7 @@
 
 USER_NAME ?= "JuanCamiloAvila"
 USER_EMAIL ?= "javilab40853@gmail.com"
-
+TOKEN ?= "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"
 help:
 	@echo Comandos disponibles:
 	@echo   make install       - Instalar dependencias
@@ -41,7 +41,7 @@ update-branch:
 hf-login:
 	pip install -U "huggingface_hub[cli]"
 	git pull origin main
-	huggingface-cli login --token $(TOKEN) --add-to-git-credential
+	huggingface-cli login
 
 push-hub:
 	huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"

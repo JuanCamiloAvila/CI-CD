@@ -1,17 +1,43 @@
-name: Continuous Deployment
-on:
-  workflow_run:
-    workflows: ["Continuous Integration"]
-    types:
-      - completed
+name: CD - Deploy Model
 
+on:
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3- name: Deployment To Hugging Face
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Train final model
+        run: python train.py
+
+      - name: Evaluate final model
+        run: python evaluate.py
+
+      - name: Login to HuggingFace
         env:
-          HF: ${{ secrets.TOKEN }}
-        run: make deploy TOKEN=$TOKEN
+          HF_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          pip install -U "huggingface_hub[cli]"
+          huggingface-cli login --token $TOKEN --add-to-git-credential
+
+      - name: Push to HuggingFace Hub
+        run: |
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model --repo-type=space --commit-message="Sync Model"
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Results --repo-type=space --commit-message="Sync Metrics"
