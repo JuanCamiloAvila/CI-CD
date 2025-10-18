@@ -40,7 +40,6 @@ update-branch:
 
 hf-login:
 	pip install -U "huggingface_hub[cli]"
-	git pull origin main
 	huggingface-cli login
 
 push-hub:

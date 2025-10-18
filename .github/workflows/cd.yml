@@ -1,4 +1,4 @@
-name: CD - Deploy Model
+name: CD - Deploy Model to HuggingFace
 
 on:
   release:
@@ -29,15 +29,53 @@ jobs:
       - name: Evaluate final model
         run: python evaluate.py
 
-      - name: Login to HuggingFace
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Login to HuggingFace Hub
         env:
-          HF_TOKEN: ${{ secrets.TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pip install -U "huggingface_hub[cli]"
-          huggingface-cli login --token $TOKEN --add-to-git-credential
+          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
 
-      - name: Push to HuggingFace Hub
+      - name: Upload App to HuggingFace
         run: |
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App --repo-type=space --commit-message="Sync App files"
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model --repo-type=space --commit-message="Sync Model"
-          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Results --repo-type=space --commit-message="Sync Metrics"
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./App \
+            --repo-type=space \
+            --commit-message="Sync App files"
+
+      - name: Upload Model to HuggingFace
+        run: |
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Model \
+            --repo-type=space \
+            --commit-message="Sync Model"
+
+      - name: Upload Results to HuggingFace
+        run: |
+          huggingface-cli upload Gatling-D-Ace/Drug-Classification ./Results \
+            --repo-type=space \
+            --commit-message="Sync Metrics"
+
+      - name: Create GitHub Release with Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-model
+          path: |
+            Model/
+            Results/metrics.txt
+            Results/models_results.png
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Model uploaded to HuggingFace Hub"
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs for more details"
