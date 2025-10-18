@@ -1,8 +1,5 @@
 .PHONY: help install format train eval update-branch hf-login push-hub deploy all
 
-USER_NAME ?= "JuanCamiloAvila"
-USER_EMAIL ?= "javilab40853@gmail.com"
-
 help:
 	@echo Comandos disponibles:
 	@echo   make install       - Instalar dependencias
@@ -33,13 +30,12 @@ eval:
 	@echo Reporte creado en report.md
 
 update-branch:
-	git config --global user.name "$(USER_NAME)"
-	git config --global user.email "$(USER_EMAIL)"
 	git commit -am "Update with new results"
-	git push --force origin HEAD:update
+	git push origin main
 
 hf-login:
 	pip install -U "huggingface_hub[cli]"
+	git pull origin main
 	huggingface-cli login
 
 push-hub:
